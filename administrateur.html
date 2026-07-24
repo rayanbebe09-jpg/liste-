@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administration - Liste des Inscriptions</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f7f6;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .status {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #007bff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+    .empty-msg {
+      text-align: center;
+      color: #777;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Liste des Inscriptions</h1>
+    <div id="status" class="status">Connexion à la base de données...</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Prénom</th>
+          <th>Âge</th>
+          <th>Date d'inscription</th>
+        </tr>
+      </thead>
+      <tbody id="tableau-inscrits">
+        <!-- Les lignes s'afficheront ici automatiquement -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Firebase App & Firestore SDKs (v9 Compat pour simplicité) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // 1. Configuration de ton projet Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCB-GK37JProHeWMjlCnq_NuSE6fw-hZus",
+      authDomain: "site-media-ecodim.firebaseapp.com",
+      projectId: "site-media-ecodim",
+      storageBucket: "site-media-ecodim.appspot.com",
+      messagingSenderId: "107123456789",
+      appId: "1:107123456789:web:abcdef123456"
+    };
+
+    // 2. Initialisation
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const statusEl = document.getElementById('status');
+    const tbodyEl = document.getElementById('tableau-inscrits');
+
+    // 3. Écoute en temps réel de la collection "inscriptions"
+    db.collection("inscriptions").onSnapshot((snapshot) => {
+      tbodyEl.innerHTML = ""; // Vider le tableau avant de recharger
+
+      if (snapshot.empty) {
+        statusEl.innerText = "Aucun inscrit pour le moment.";
+        tbodyEl.innerHTML = `<tr><td colspan="4" class="empty-msg">Aucune donnée trouvée.</td></tr>`;
+        return;
+      }
+
+      statusEl.innerText = `Nombre d'inscrits en direct : ${snapshot.size}`;
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const row = document.createElement('tr');
+
+        // Formater la date si elle existe
+        let dateFormatee = "N/A";
+        if (data.timestamp) {
+          dateFormatee = new Date(data.timestamp.toDate()).toLocaleString('fr-FR');
+        } else if (data.date) {
+          dateFormatee = data.date;
+        }
+
+        row.innerHTML = `
+          <td>${data.nom || '-'}</td>
+          <td>${data.prenom || '-'}</td>
+          <td>${data.age || '-'}</td>
+          <td>${dateFormatee}</td>
+        `;
+
+        tbodyEl.appendChild(row);
+      });
+    }, (error) => {
+      console.error("Erreur Firebase :", error);
+      statusEl.innerText = "⚠️ Erreur lors du chargement des données.";
+    });
+  </script>
+
+</body>
+</html>
